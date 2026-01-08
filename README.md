@@ -16,7 +16,15 @@ Sync Claude Code settings across devices via GitHub Gists.
 
 ## Installation
 
-Add to your Claude Code settings:
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
+```
+
+### Manual Configuration
+
+Add to your Claude Code settings (`~/.claude/settings.json`):
 
 ```json
 {
@@ -27,8 +35,17 @@ Add to your Claude Code settings:
         "repo": "AnthonySu/brooklyn-marketplace"
       }
     }
+  },
+  "enabledPlugins": {
+    "claude-settings-sync@brooklyn-marketplace": true
   }
 }
+```
+
+Then clone the repo:
+
+```bash
+git clone https://github.com/AnthonySu/brooklyn-marketplace.git ~/.claude/plugins/marketplaces/brooklyn-marketplace
 ```
 
 ## License

@@ -21,11 +21,11 @@ Device A (MacBook)                    Device B (iMac)
 ### Option A: One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AnthonySu/claude-settings-sync/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
 ```
 
 This automatically:
-- Clones the repository to the correct location
+- Clones the brooklyn-marketplace repository
 - Updates all Claude Code configuration files
 - Makes scripts executable
 
@@ -36,17 +36,17 @@ After installation, restart Claude Code and run `/claude-settings-sync:setup`.
 Tell Claude:
 
 ```
-Install the claude-settings-sync plugin from https://github.com/AnthonySu/claude-settings-sync
+Install the claude-settings-sync plugin from brooklyn-marketplace: https://github.com/AnthonySu/brooklyn-marketplace
 ```
 
 ### Option C: Manual
 
 ```bash
-# Clone to marketplaces directory
-git clone https://github.com/AnthonySu/claude-settings-sync.git ~/.claude/plugins/marketplaces/claude-settings-sync
+# Clone brooklyn-marketplace
+git clone https://github.com/AnthonySu/brooklyn-marketplace.git ~/.claude/plugins/marketplaces/brooklyn-marketplace
 
 # Run the installer
-~/.claude/plugins/marketplaces/claude-settings-sync/install.sh
+~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/install.sh
 ```
 
 ## Setup

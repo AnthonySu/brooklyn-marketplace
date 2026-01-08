@@ -1,8 +1,8 @@
 #!/bin/bash
-# install.sh - Automated installer for claude-settings-sync plugin
+# install.sh - Automated installer for claude-settings-sync plugin (via brooklyn-marketplace)
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/AnthonySu/claude-settings-sync/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
 #   OR
 #   ./install.sh
 
@@ -20,12 +20,13 @@ BOLD='\033[1m'
 CLAUDE_DIR="$HOME/.claude"
 PLUGINS_DIR="$CLAUDE_DIR/plugins"
 MARKETPLACES_DIR="$PLUGINS_DIR/marketplaces"
-INSTALL_DIR="$MARKETPLACES_DIR/claude-settings-sync"
+MARKETPLACE_NAME="brooklyn-marketplace"
+INSTALL_DIR="$MARKETPLACES_DIR/$MARKETPLACE_NAME"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
 KNOWN_MARKETPLACES_FILE="$PLUGINS_DIR/known_marketplaces.json"
 INSTALLED_PLUGINS_FILE="$PLUGINS_DIR/installed_plugins.json"
 
-REPO_URL="https://github.com/AnthonySu/claude-settings-sync.git"
+REPO_URL="https://github.com/AnthonySu/brooklyn-marketplace.git"
 PLUGIN_NAME="claude-settings-sync"
 PLUGIN_VERSION="1.1.0"
 
@@ -79,11 +80,11 @@ fi
 
 # Make scripts executable
 log_info "Setting script permissions..."
-chmod +x "$INSTALL_DIR/scripts/"*.sh
+chmod +x "$INSTALL_DIR/$PLUGIN_NAME/scripts/"*.sh
 
 # Get plugin version from plugin.json
-if [ -f "$INSTALL_DIR/.claude-plugin/plugin.json" ]; then
-    PLUGIN_VERSION=$(jq -r '.version // "1.0.0"' "$INSTALL_DIR/.claude-plugin/plugin.json")
+if [ -f "$INSTALL_DIR/$PLUGIN_NAME/.claude-plugin/plugin.json" ]; then
+    PLUGIN_VERSION=$(jq -r '.version // "1.0.0"' "$INSTALL_DIR/$PLUGIN_NAME/.claude-plugin/plugin.json")
 fi
 
 # Update settings.json
@@ -98,7 +99,7 @@ fi
 SETTINGS=$(cat "$SETTINGS_FILE")
 
 # Add marketplace to extraKnownMarketplaces
-SETTINGS=$(echo "$SETTINGS" | jq --arg name "$PLUGIN_NAME" --arg repo "AnthonySu/$PLUGIN_NAME" '
+SETTINGS=$(echo "$SETTINGS" | jq --arg name "$MARKETPLACE_NAME" --arg repo "AnthonySu/$MARKETPLACE_NAME" '
     .extraKnownMarketplaces //= {} |
     .extraKnownMarketplaces[$name] = {
         "source": {
@@ -108,8 +109,8 @@ SETTINGS=$(echo "$SETTINGS" | jq --arg name "$PLUGIN_NAME" --arg repo "AnthonySu
     }
 ')
 
-# Enable the plugin
-SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "${PLUGIN_NAME}@${PLUGIN_NAME}" '
+# Enable the plugin (format: plugin@marketplace)
+SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" '
     .enabledPlugins //= {} |
     .enabledPlugins[$plugin] = true
 ')
@@ -128,7 +129,7 @@ fi
 KNOWN=$(cat "$KNOWN_MARKETPLACES_FILE")
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%S.000Z")
 
-KNOWN=$(echo "$KNOWN" | jq --arg name "$PLUGIN_NAME" --arg repo "AnthonySu/$PLUGIN_NAME" --arg path "$INSTALL_DIR" --arg ts "$TIMESTAMP" '
+KNOWN=$(echo "$KNOWN" | jq --arg name "$MARKETPLACE_NAME" --arg repo "AnthonySu/$MARKETPLACE_NAME" --arg path "$INSTALL_DIR" --arg ts "$TIMESTAMP" '
     .[$name] = {
         "source": {
             "source": "github",
@@ -151,7 +152,7 @@ fi
 
 INSTALLED=$(cat "$INSTALLED_PLUGINS_FILE")
 
-INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "${PLUGIN_NAME}@${PLUGIN_NAME}" --arg path "$INSTALL_DIR" --arg version "$PLUGIN_VERSION" --arg ts "$TIMESTAMP" --arg home "$HOME" '
+INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" --arg path "$INSTALL_DIR/$PLUGIN_NAME" --arg version "$PLUGIN_VERSION" --arg ts "$TIMESTAMP" --arg home "$HOME" '
     .version = 2 |
     .plugins[$plugin] = [{
         "scope": "project",
