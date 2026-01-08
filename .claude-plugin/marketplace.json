@@ -1,0 +1,12 @@
+{
+  "name": "brooklyn-marketplace",
+  "version": "1.0.0",
+  "description": "Brooklyn's personal collection of Claude Code plugins",
+  "author": {
+    "name": "Anthony Su",
+    "url": "https://github.com/AnthonySu"
+  },
+  "plugins": [
+    "./claude-settings-sync/"
+  ]
+}
