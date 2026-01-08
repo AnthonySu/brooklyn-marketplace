@@ -77,6 +77,24 @@ Enter your token when prompted. This creates a private Gist for your settings.
 | `/claude-settings-sync:push` | Upload local settings to Gist |
 | `/claude-settings-sync:pull` | Download settings from Gist |
 | `/claude-settings-sync` | Show sync status |
+| `/claude-settings-sync:uninstall` | Remove plugin completely |
+
+## Uninstall
+
+To completely remove the plugin:
+
+```bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
+```
+
+Or run `/claude-settings-sync:uninstall` in Claude Code.
+
+This removes:
+- The marketplace directory
+- Plugin entries from Claude Code config
+- Sync configuration and local backups
+
+Your GitHub Gist is NOT deleted (visit https://gist.github.com to remove it manually).
 
 ### Sync to a new device
 
