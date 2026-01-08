@@ -2,29 +2,46 @@
 
 A personal collection of Claude Code plugins.
 
+## Installation
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/install.sh | bash
+```
+
+Then restart Claude Code.
+
 ## Plugins
 
 ### claude-settings-sync
 
 Sync Claude Code settings across devices via GitHub Gists.
 
+**Setup:** After installation, run `/claude-settings-sync:setup`
+
 **Commands:**
-- `/claude-settings-sync` - Show sync status
-- `/claude-settings-sync:setup` - Configure your GitHub token
-- `/claude-settings-sync:push` - Upload settings to Gist
-- `/claude-settings-sync:pull` - Download settings from Gist
+| Command | Description |
+|---------|-------------|
+| `/claude-settings-sync` | Show sync status |
+| `/claude-settings-sync:setup` | Configure GitHub token |
+| `/claude-settings-sync:push` | Upload settings to Gist |
+| `/claude-settings-sync:pull` | Download settings from Gist |
+| `/claude-settings-sync:uninstall` | Disable this plugin |
 
-## Installation
+## Uninstall
 
-### Quick Install (Recommended)
-
+**Remove entire marketplace:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/uninstall.sh
 ```
 
-### Manual Configuration
+**Disable single plugin only:**
+```bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
+```
 
-Add to your Claude Code settings (`~/.claude/settings.json`):
+## Manual Configuration
+
+Add to `~/.claude/settings.json`:
 
 ```json
 {
@@ -40,12 +57,6 @@ Add to your Claude Code settings (`~/.claude/settings.json`):
     "claude-settings-sync@brooklyn-marketplace": true
   }
 }
-```
-
-Then clone the repo:
-
-```bash
-git clone https://github.com/AnthonySu/brooklyn-marketplace.git ~/.claude/plugins/marketplaces/brooklyn-marketplace
 ```
 
 ## License

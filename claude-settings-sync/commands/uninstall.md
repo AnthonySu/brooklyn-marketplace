@@ -1,27 +1,42 @@
 ---
-description: Uninstall claude-settings-sync plugin and brooklyn-marketplace
+description: Disable claude-settings-sync plugin
 allowed-tools: Bash, Read, AskUserQuestion
 ---
 
 # Uninstall Settings Sync
 
-Completely remove the claude-settings-sync plugin and brooklyn-marketplace.
+Disable the claude-settings-sync plugin and remove its configuration.
 
-## What This Removes
+## Two Options
 
-- brooklyn-marketplace directory (`~/.claude/plugins/marketplaces/brooklyn-marketplace/`)
-- Plugin entries from Claude Code configuration files
+### Option 1: Disable Plugin Only (Default)
+
+This keeps the brooklyn-marketplace installed for other plugins.
+
+```bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
+```
+
+**Removes:**
+- Plugin from enabledPlugins
 - Sync configuration (GitHub token, Gist ID)
 - Local backup files
 
-## What This Keeps
+**Keeps:**
+- brooklyn-marketplace (for other plugins)
+- Your GitHub Gist (not deleted remotely)
 
-- Your GitHub Gist with synced settings (not deleted remotely)
-- Your actual Claude Code settings (only the sync plugin is removed)
+### Option 2: Remove Entire Marketplace
 
-## Uninstall Steps
+This removes brooklyn-marketplace and all its plugins.
 
-Run the uninstall script:
+```bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/uninstall.sh
+```
+
+## Steps for Option 1 (Plugin Only)
+
+Run the plugin uninstall script:
 
 ```bash
 ~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
@@ -29,18 +44,10 @@ Run the uninstall script:
 
 The script will:
 1. Ask for confirmation
-2. Remove the marketplace from `settings.json`
-3. Clean up `known_marketplaces.json`
-4. Clean up `installed_plugins.json`
-5. Remove sync config and local backups
-6. Delete the marketplace directory
+2. Disable plugin in `settings.json`
+3. Remove from `installed_plugins.json`
+4. Remove sync config and local backups
 
 After uninstall, tell the user to restart Claude Code.
 
-## Alternative: One-liner
-
-If the local files are corrupted, run:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/uninstall.sh | bash
-```
+To re-enable later, set `"claude-settings-sync@brooklyn-marketplace": true` in enabledPlugins.

@@ -18,35 +18,24 @@ Device A (MacBook)                    Device B (iMac)
 
 ## Installation
 
-### Option A: One-Line Install (Recommended)
+### One-Line Install (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/install.sh | bash
 ```
 
-This automatically:
-- Clones the brooklyn-marketplace repository
-- Updates all Claude Code configuration files
-- Makes scripts executable
+This installs the brooklyn-marketplace and enables all plugins including claude-settings-sync.
 
 After installation, restart Claude Code and run `/claude-settings-sync:setup`.
 
-### Option B: Ask Claude
-
-Tell Claude:
-
-```
-Install the claude-settings-sync plugin from brooklyn-marketplace: https://github.com/AnthonySu/brooklyn-marketplace
-```
-
-### Option C: Manual
+### Manual
 
 ```bash
 # Clone brooklyn-marketplace
 git clone https://github.com/AnthonySu/brooklyn-marketplace.git ~/.claude/plugins/marketplaces/brooklyn-marketplace
 
-# Run the installer
-~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/install.sh
+# Run the marketplace installer
+~/.claude/plugins/marketplaces/brooklyn-marketplace/install.sh
 ```
 
 ## Setup
@@ -81,7 +70,7 @@ Enter your token when prompted. This creates a private Gist for your settings.
 
 ## Uninstall
 
-To completely remove the plugin:
+**Disable this plugin only** (keeps marketplace for other plugins):
 
 ```bash
 ~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
@@ -89,12 +78,13 @@ To completely remove the plugin:
 
 Or run `/claude-settings-sync:uninstall` in Claude Code.
 
-This removes:
-- The marketplace directory
-- Plugin entries from Claude Code config
-- Sync configuration and local backups
+**Remove entire marketplace** (all plugins):
 
-Your GitHub Gist is NOT deleted (visit https://gist.github.com to remove it manually).
+```bash
+~/.claude/plugins/marketplaces/brooklyn-marketplace/uninstall.sh
+```
+
+Both options remove sync configuration and local backups. Your GitHub Gist is NOT deleted (visit https://gist.github.com to remove it manually).
 
 ### Sync to a new device
 

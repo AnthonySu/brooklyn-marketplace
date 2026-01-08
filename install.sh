@@ -1,10 +1,8 @@
 #!/bin/bash
-# install.sh - Automated installer for claude-settings-sync plugin (via brooklyn-marketplace)
+# install.sh - Automated installer for brooklyn-marketplace
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/install.sh | bash
-#   OR
-#   ./install.sh
+#   curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/install.sh | bash
 
 set -e
 
@@ -13,7 +11,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+NC='\033[0m'
 BOLD='\033[1m'
 
 # Paths
@@ -27,8 +25,9 @@ KNOWN_MARKETPLACES_FILE="$PLUGINS_DIR/known_marketplaces.json"
 INSTALLED_PLUGINS_FILE="$PLUGINS_DIR/installed_plugins.json"
 
 REPO_URL="https://github.com/AnthonySu/brooklyn-marketplace.git"
-PLUGIN_NAME="claude-settings-sync"
-PLUGIN_VERSION="1.1.0"
+
+# Plugins to enable (add more here as marketplace grows)
+PLUGINS=("claude-settings-sync")
 
 log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
@@ -37,7 +36,7 @@ log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 echo ""
 echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║${NC}${BOLD}        Claude Settings Sync - Installer                    ${NC}${CYAN}║${NC}"
+echo -e "${CYAN}║${NC}${BOLD}        Brooklyn Marketplace - Installer                    ${NC}${CYAN}║${NC}"
 echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -78,24 +77,17 @@ else
     git clone "$REPO_URL" "$INSTALL_DIR"
 fi
 
-# Make scripts executable
+# Make all scripts executable
 log_info "Setting script permissions..."
-chmod +x "$INSTALL_DIR/$PLUGIN_NAME/scripts/"*.sh
-
-# Get plugin version from plugin.json
-if [ -f "$INSTALL_DIR/$PLUGIN_NAME/.claude-plugin/plugin.json" ]; then
-    PLUGIN_VERSION=$(jq -r '.version // "1.0.0"' "$INSTALL_DIR/$PLUGIN_NAME/.claude-plugin/plugin.json")
-fi
+find "$INSTALL_DIR" -name "*.sh" -exec chmod +x {} \;
 
 # Update settings.json
 log_info "Updating settings.json..."
 
 if [ ! -f "$SETTINGS_FILE" ]; then
-    # Create minimal settings.json
     echo '{}' > "$SETTINGS_FILE"
 fi
 
-# Read current settings
 SETTINGS=$(cat "$SETTINGS_FILE")
 
 # Add marketplace to extraKnownMarketplaces
@@ -109,13 +101,16 @@ SETTINGS=$(echo "$SETTINGS" | jq --arg name "$MARKETPLACE_NAME" --arg repo "Anth
     }
 ')
 
-# Enable the plugin (format: plugin@marketplace)
-SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" '
-    .enabledPlugins //= {} |
-    .enabledPlugins[$plugin] = true
-')
+# Enable all plugins
+for PLUGIN in "${PLUGINS[@]}"; do
+    PLUGIN_KEY="${PLUGIN}@${MARKETPLACE_NAME}"
+    SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "$PLUGIN_KEY" '
+        .enabledPlugins //= {} |
+        .enabledPlugins[$plugin] = true
+    ')
+    log_info "Enabled plugin: $PLUGIN"
+done
 
-# Write back settings
 echo "$SETTINGS" | jq '.' > "$SETTINGS_FILE"
 log_success "Updated settings.json"
 
@@ -152,18 +147,29 @@ fi
 
 INSTALLED=$(cat "$INSTALLED_PLUGINS_FILE")
 
-INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" --arg path "$INSTALL_DIR/$PLUGIN_NAME" --arg version "$PLUGIN_VERSION" --arg ts "$TIMESTAMP" --arg home "$HOME" '
-    .version = 2 |
-    .plugins[$plugin] = [{
-        "scope": "project",
-        "installPath": $path,
-        "version": $version,
-        "installedAt": $ts,
-        "lastUpdated": $ts,
-        "isLocal": false,
-        "projectPath": $home
-    }]
-')
+for PLUGIN in "${PLUGINS[@]}"; do
+    PLUGIN_KEY="${PLUGIN}@${MARKETPLACE_NAME}"
+    PLUGIN_PATH="$INSTALL_DIR/$PLUGIN"
+
+    # Get version from plugin.json if exists
+    PLUGIN_VERSION="1.0.0"
+    if [ -f "$PLUGIN_PATH/.claude-plugin/plugin.json" ]; then
+        PLUGIN_VERSION=$(jq -r '.version // "1.0.0"' "$PLUGIN_PATH/.claude-plugin/plugin.json")
+    fi
+
+    INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "$PLUGIN_KEY" --arg path "$PLUGIN_PATH" --arg version "$PLUGIN_VERSION" --arg ts "$TIMESTAMP" --arg home "$HOME" '
+        .version = 2 |
+        .plugins[$plugin] = [{
+            "scope": "project",
+            "installPath": $path,
+            "version": $version,
+            "installedAt": $ts,
+            "lastUpdated": $ts,
+            "isLocal": false,
+            "projectPath": $home
+        }]
+    ')
+done
 
 echo "$INSTALLED" | jq '.' > "$INSTALLED_PLUGINS_FILE"
 log_success "Updated installed_plugins.json"
@@ -174,12 +180,15 @@ echo -e "${GREEN}╔════════════════════
 echo -e "${GREEN}║${NC}${BOLD}              Installation Complete!                        ${NC}${GREEN}║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+echo "Installed plugins:"
+for PLUGIN in "${PLUGINS[@]}"; do
+    echo "  - $PLUGIN"
+done
+echo ""
 echo "Next steps:"
 echo "  1. Restart Claude Code (or start a new session)"
-echo "  2. Run /claude-settings-sync:setup to configure your GitHub token"
+echo "  2. Run /claude-settings-sync:setup to configure settings sync"
 echo ""
-echo "Commands available after setup:"
-echo "  /claude-settings-sync        - Show sync status"
-echo "  /claude-settings-sync:push   - Upload settings to Gist"
-echo "  /claude-settings-sync:pull   - Download settings from Gist"
+echo "To uninstall the entire marketplace:"
+echo "  $INSTALL_DIR/uninstall.sh"
 echo ""

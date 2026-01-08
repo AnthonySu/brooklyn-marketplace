@@ -1,10 +1,11 @@
 #!/bin/bash
-# uninstall.sh - Uninstaller for claude-settings-sync plugin (brooklyn-marketplace)
+# uninstall.sh - Uninstaller for claude-settings-sync plugin only
 #
-# Usage:
-#   ~/.claude/plugins/marketplaces/brooklyn-marketplace/claude-settings-sync/uninstall.sh
-#   OR
-#   curl -fsSL https://raw.githubusercontent.com/AnthonySu/brooklyn-marketplace/main/claude-settings-sync/uninstall.sh | bash
+# This removes just the plugin configuration and disables it,
+# but keeps the brooklyn-marketplace installed for other plugins.
+#
+# To remove the entire marketplace, use:
+#   ~/.claude/plugins/marketplaces/brooklyn-marketplace/uninstall.sh
 
 set -e
 
@@ -19,16 +20,12 @@ BOLD='\033[1m'
 # Paths
 CLAUDE_DIR="$HOME/.claude"
 PLUGINS_DIR="$CLAUDE_DIR/plugins"
-MARKETPLACES_DIR="$PLUGINS_DIR/marketplaces"
 MARKETPLACE_NAME="brooklyn-marketplace"
-INSTALL_DIR="$MARKETPLACES_DIR/$MARKETPLACE_NAME"
+PLUGIN_NAME="claude-settings-sync"
 SETTINGS_FILE="$CLAUDE_DIR/settings.json"
-KNOWN_MARKETPLACES_FILE="$PLUGINS_DIR/known_marketplaces.json"
 INSTALLED_PLUGINS_FILE="$PLUGINS_DIR/installed_plugins.json"
 SYNC_CONFIG_DIR="$PLUGINS_DIR/plugins-config"
 SYNC_BACKUPS_DIR="$CLAUDE_DIR/sync-backups"
-
-PLUGIN_NAME="claude-settings-sync"
 
 log_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
@@ -36,9 +33,9 @@ log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
 echo ""
-echo -e "${RED}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${RED}║${NC}${BOLD}        Claude Settings Sync - Uninstaller                  ${NC}${RED}║${NC}"
-echo -e "${RED}╚════════════════════════════════════════════════════════════╝${NC}"
+echo -e "${YELLOW}╔════════════════════════════════════════════════════════════╗${NC}"
+echo -e "${YELLOW}║${NC}${BOLD}     Claude Settings Sync - Plugin Uninstaller              ${NC}${YELLOW}║${NC}"
+echo -e "${YELLOW}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # Check if jq is available
@@ -49,13 +46,15 @@ if ! command -v jq &> /dev/null; then
 fi
 
 # Confirm uninstall
-echo -e "${YELLOW}This will remove:${NC}"
-echo "  - brooklyn-marketplace directory"
-echo "  - Plugin entries from Claude Code settings"
-echo "  - Sync configuration (token, gist ID)"
-echo "  - Local backups"
+echo -e "${YELLOW}This will:${NC}"
+echo "  - Disable the claude-settings-sync plugin"
+echo "  - Remove sync configuration (GitHub token, Gist ID)"
+echo "  - Remove local backup files"
 echo ""
-read -p "Are you sure you want to uninstall? [y/N] " -n 1 -r
+echo -e "${CYAN}Note:${NC} The brooklyn-marketplace will remain installed."
+echo "      To remove everything, run the marketplace uninstall instead."
+echo ""
+read -p "Continue? [y/N] " -n 1 -r
 echo ""
 
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -63,55 +62,34 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 0
 fi
 
-# Remove from settings.json
-log_info "Cleaning up settings.json..."
+PLUGIN_KEY="${PLUGIN_NAME}@${MARKETPLACE_NAME}"
+
+# Disable plugin in settings.json
+log_info "Disabling plugin in settings.json..."
 if [ -f "$SETTINGS_FILE" ]; then
     SETTINGS=$(cat "$SETTINGS_FILE")
-
-    # Remove marketplace from extraKnownMarketplaces
-    SETTINGS=$(echo "$SETTINGS" | jq --arg name "$MARKETPLACE_NAME" '
-        if .extraKnownMarketplaces then
-            .extraKnownMarketplaces |= del(.[$name])
-        else . end |
-        if .extraKnownMarketplaces == {} then del(.extraKnownMarketplaces) else . end
+    SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "$PLUGIN_KEY" '
+        if .enabledPlugins[$plugin] then
+            .enabledPlugins[$plugin] = false
+        else . end
     ')
-
-    # Remove plugin from enabledPlugins
-    SETTINGS=$(echo "$SETTINGS" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" '
-        if .enabledPlugins then
-            .enabledPlugins |= del(.[$plugin])
-        else . end |
-        if .enabledPlugins == {} then del(.enabledPlugins) else . end
-    ')
-
     echo "$SETTINGS" | jq '.' > "$SETTINGS_FILE"
-    log_success "Cleaned settings.json"
+    log_success "Disabled $PLUGIN_NAME"
 else
     log_warn "settings.json not found, skipping"
 fi
 
-# Remove from known_marketplaces.json
-log_info "Cleaning up known_marketplaces.json..."
-if [ -f "$KNOWN_MARKETPLACES_FILE" ]; then
-    KNOWN=$(cat "$KNOWN_MARKETPLACES_FILE")
-    KNOWN=$(echo "$KNOWN" | jq --arg name "$MARKETPLACE_NAME" 'del(.[$name])')
-    echo "$KNOWN" | jq '.' > "$KNOWN_MARKETPLACES_FILE"
-    log_success "Cleaned known_marketplaces.json"
-else
-    log_warn "known_marketplaces.json not found, skipping"
-fi
-
 # Remove from installed_plugins.json
-log_info "Cleaning up installed_plugins.json..."
+log_info "Removing from installed_plugins.json..."
 if [ -f "$INSTALLED_PLUGINS_FILE" ]; then
     INSTALLED=$(cat "$INSTALLED_PLUGINS_FILE")
-    INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "${PLUGIN_NAME}@${MARKETPLACE_NAME}" '
+    INSTALLED=$(echo "$INSTALLED" | jq --arg plugin "$PLUGIN_KEY" '
         if .plugins then
             .plugins |= del(.[$plugin])
         else . end
     ')
     echo "$INSTALLED" | jq '.' > "$INSTALLED_PLUGINS_FILE"
-    log_success "Cleaned installed_plugins.json"
+    log_success "Removed plugin entry"
 else
     log_warn "installed_plugins.json not found, skipping"
 fi
@@ -134,22 +112,17 @@ else
     log_warn "No backups found, skipping"
 fi
 
-# Remove marketplace directory
-log_info "Removing marketplace directory..."
-if [ -d "$INSTALL_DIR" ]; then
-    rm -rf "$INSTALL_DIR"
-    log_success "Removed $INSTALL_DIR"
-else
-    log_warn "Marketplace directory not found, skipping"
-fi
-
 echo ""
 echo -e "${GREEN}╔════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}║${NC}${BOLD}             Uninstall Complete!                            ${NC}${GREEN}║${NC}"
+echo -e "${GREEN}║${NC}${BOLD}          Plugin Disabled Successfully!                     ${NC}${GREEN}║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+echo "The claude-settings-sync plugin has been disabled."
 echo "Please restart Claude Code to complete the removal."
 echo ""
-echo -e "${CYAN}Note:${NC} Your GitHub Gist with synced settings was NOT deleted."
+echo -e "${CYAN}Note:${NC} Your GitHub Gist was NOT deleted."
 echo "To delete it, visit: https://gist.github.com"
+echo ""
+echo "To re-enable this plugin later, set in settings.json:"
+echo "  \"enabledPlugins\": { \"$PLUGIN_KEY\": true }"
 echo ""
